@@ -1,0 +1,13 @@
+#Create user and put it into the users group
+useradd -g users e181235
+
+#Change new user personal info
+chfn 181235
+
+passwd e181235
+
+groupadd friends
+
+useradd -g users -G friends voisin
+
+usermod e181235 -G friends
