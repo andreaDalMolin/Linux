@@ -1,0 +1,42 @@
+Ex. 1 - Réalisez une sauvegarde du répertoire /home dans un fichier /tmp/home-back.xz. Ce fichier sera compressé au format xz.
+
+tar cvJf /tmp/home-back.tar.xz /home
+
+
+Ex. 2 - Réalisez le même exercice que le précédent, en utilisant la commande zip : créer l’archive /tmp/home-back.zip contenant l’ensemble du dossier /home.
+
+zip -r /tmp/save-etc.zip /home/*
+
+Ex. 3 - Testez et décompressez l’une des archives précédentes dans votre dossier personnel
+
+Se placer dans l'endroit où l'on veut que le zip/tar soit decrompressé, puis:
+
+unzip /tmp/save-etc.zip
+
+
+Ex. 4 - Programmez une tâche ponctuelle, pour le cours prochain, au milieu de celui-ci, et lancer la commande /usr/sbin/poweroff
+
+at 16:3201152022
+/usr/sbin/poweroff
+Ctrl + D
+
+
+Ex. 5 - Programmez, pour la fin des cours avec crontab, la synchronisation de vos répertoires personnels (/home) vers le serveur dartagnan [...]
+
+crontab -e
+0-59/10 * * * * rsync -avz /home e181235@dartagnan.cg.helmo.be:~/back -e ssh
+
+
+Ex. 6 - Installez, avec la commande dnf, le package whois
+
+dnf install whois
+
+
+Ex. 7 - Installez, depuis les sources, le programme unrar
+
+git clone https://github.com/pmachapman/unrar.git
+cd unrar
+make
+make install
+cd ..
+unrar Notes.rar
