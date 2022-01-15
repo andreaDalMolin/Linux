@@ -24,7 +24,7 @@ dd if=/dev/zero of=./monfichier bs=1M count=250
 
 Ex. 4 - Déterminer, à l’aide de la commande du26, l’espace disque consommé par chaque utilisateur dans le dossier /home.
 
-?
+du -h -d 1 /home
 
 Ex. 5 - Créer le script mkquota.py
 
