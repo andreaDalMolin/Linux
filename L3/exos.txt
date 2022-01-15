@@ -1,0 +1,40 @@
+Ex. 1 - Activer les quotas sur la partition /home
+
+-Modifier fstab dans /etc/fstab, (ajouter grpquota,usrquota,prjquota)
+-systemctl daemon-reload
+-mount /home -o remount
+
+Pour contrôler si ces modifications ont bien été prises en compte, il faut simplement exécuter :
+-mount | grep /home
+
+
+Ex. 2 - Modifier les quotas
+
+[root@localhost ~]# xfs_quota -x -c 'limit bsoft=230m bhard=250m voisin' /home
+[root@localhost ~]# xfs_quota -x -c 'limit -g bsoft=450m bhard=500m etudiants' /home
+[root@localhost ~]# xfs_quota -x -c 'limit bsoft=100m bhard=120m sec1' /home
+
+xfs_quota -x -c 'report -a -h' /home
+
+
+Ex. 3 - Vérifier que les quotas fonctionnent en copiant25, avec le compte d’un utilisateur impacté, un large fichier dans son dossier personnel
+
+dd if=/dev/zero of=./monfichier bs=1M count=250
+
+
+Ex. 4 - Déterminer, à l’aide de la commande du26, l’espace disque consommé par chaque utilisateur dans le dossier /home.
+
+?
+
+Ex. 5 - Créer le script mkquota.py
+
+Cf. mkquota.py
+
+
+Ex. 6 - Créer un projet DocuDirection, dont le chemin est /home/docudir (avec l’ID 130) et soumis à un quota (pour le projet) de 300 Mo
+
+mkdir /home/docudir
+echo 130:/home/docudir >> /etc/projects
+echo DocuDirection:130 >> /etc/projid
+xfs_quota -x -c 'project -s DocuDirection' /home
+xfs_quota -x -c 'limit -p bhard=300m DocuDirection' /home
