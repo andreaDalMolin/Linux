@@ -1,0 +1,39 @@
+Ex. 3/4 - Configurer votre machine RHEL8 – Routeur en mode « routeur ». L’adresse IP à configurer sur la 2ème interface réseau est 192.168.131.2
+
+Ajouter une interface réseau.
+Check avec ip addr show que la nouvelle interface existe
+nmtui 
+	-> Edit a connection
+		-> Add
+			-> Ethernet
+				->Profile name et device avec même nom (ens224)
+				->IPV4 config Manual
+				->Address: 192.168.131.2/24
+			-> Save and close
+		->Disable & enable
+	->Close
+Checker la ens224
+Modifier la config ens160 sur le client
+	->IP .15
+	->Passerelle == Ip du router == 192.168.131.2
+	->Mentionner 1.1.1.1 et 9.9.9.9 comme DNS servers
+
+Pour config en mode ROUTEUR:
+	vim /etc/sysctl.d/10-ipforward.conf (peu importe le nom tant que ça se termine par .conf)
+		# Enabling IP Forwarding
+		net.ipv4.ip_forward=1
+	
+	Reboot ou entrer  echo 1 > /proc/sys/net/ipv4/ip_forward  pour activer tout de suite
+nft add table ip nat
+nft add chain nat postrouting { type nat hook postrouting priority 100 \; }
+nft add rule nat postrouting ip saddr xxx.xx.x.x/24 masquerade (où l'addresse corréspond à le sous réseau 192.168.131.0)
+
+Ex. 5 - A l’aide de nmap, lister tous les ports ouverts sur les machines RHEL8 Routeur et Client
+
+nmap -A -T4 127.0.0.1
+
+Ex. 6 - A l’aide de hping3, simulez un traceroute sur le port 80 vers www.yahoo.fr
+
+
+Ex. 7 - Utiliser hping3 pour échanger le fichier texte /var/log/reboot.log entre vos 2 machines
+

@@ -1,0 +1,62 @@
+Ex. 1 - Changer le mot de passe du compte root par votre mot de passe HELMo
+
+passwd root
+
+
+Ex. 2 - Ouvrir le port 22 sur votre firewall pfSense
+
+Cf. L1 16:53
+
+
+Ex. 3 - Planifier une sauvegarde automatique en utilisant rsync de votre dossier /home vers le serveur dartagnan, en utilisant votre compte HELMo (voir leçon précédente)
+
+cf. SSH keygen.png
+
+1. Tu te connectes avec un utilisateur non admin sur ta machine linux 
+2. Tu crées une paire de clés avec "ssh-keygen -t rsa -b 4096"
+3. Tu upload ta clé publique sur le serveur avec : "ssh-copy-id -i .ssh/id_rsa.pub [login ssh]@[adresse ssh]"
+4. Tu crées la tâche de synchronisation avec crontab, le mot de passe ne sera plus demandé et ça fonctionnera
+
+
+Ex. 4 - 4. Configurer un tunnel SSH pour accéder au serveur web de votre voisin. Pour ce faire, rediriger le port local 8080 vers sa machine, sur le port 80. Accéder à son site web en utilisant l’adresse http://127.0.0.1:8080
+
+Impossible à faire de chez soit car on a besoin des données d'un autre user
+ssh -L 8080:127.0.0.1:80 matriculeVoisin@dartagnan.cg.helmo.be
+
+
+Ex. 5 - Installer les packages x2goserver sur RHEL8 Server et x2goclient sur RHEL8 Client qui permettent la connexion en mode graphique sur le serveur. Lors de la configuration, précisez XFCE comme gestionnaire de session
+
+dnf install x2goserver-xsession
+
+
+Ex. 6 - Configurer un service DHCP sur votre machine RHEL8-Routeur
+
+Se déplacer dans /etc/dhcp
+cp /usr/share/doc/dhcp-server/dhcpd.conf.example ./dhcpd.conf
+cf dhcpd.conf.PNG
+
+
+Ex. 7 - Configurer votre machine RHEL8-Client en mode DHCP pour qu’elle reçoive sa configuration
+par le service DHCP
+
+Repasser en mode manuel avec nmtui
+
+
+Ex. 8 - Installer le service chrony sur votre machine RHEL8-Routeur et de le configurer comme suit
+
+vim /etc/chrony.conf
+pool ...
+pool ...
+pool ...
+
+allow 192.168.131.0/24
+systemctl enable --now chronyd
+chronyc sources pour consulter les sources
+
+
+Ex. 9 - Installer un serveur chrony sur votre machine RHEL8-Client et configurer-le de sorte à
+questionner le serveur installé sur la machine RHEL8-Serveur
+
+vim /etc/chrony.conf
+pool 192.168.131.2
+systemctl enable --now chronyd
