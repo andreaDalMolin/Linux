@@ -1,0 +1,121 @@
+Ex. 1 - Configurer un serveur DNS pour la zone <nomdefamille>.swilabus.com
+
+dnf install bind-chroot (pour install le dns au cas où...)
+cd /var/named/chroot/etc
+cp /usr/share/doc/bind/sample/etc/* ./
+vim named.conf 
+
+listen-on port 53       { any; };
+// listen-on port 53    { 127.0.0.1; };
+
+listen-on-v6 port 53    { any; };
+ // listen-on-v6 port 53 { ::1; };
+ 
+allow-query             { any; };
+allow-query-cache       { any; };
+
+version "1234";
+[ forwarders { 1.1.1.1 }; ] -> ceci est pour définir un forwarder DE MANIERE GLOBALE
+
+Ajouter localhost à match-clients
+
+Zone interne:
+zone "dalmolin.swilabus.com" {
+                type master;
+                file "db.dalmolin.swilabus.com";
+                allow-update { none; };
+                allow-transfer { none; };
+}
+
+zone "131.168.192.in-addr.arpa" in {
+                type master;
+                file "db.131.168.192";
+                allow-update { none; };
+                allow-transfer { none; };
+};
+
+
+Zone externe:
+zone "dalmolin.swilabus.com" {
+                type master;
+                file "db.dalmolin.swilabus.com.external";
+};
+
+Pour les fichiers db:
+cd /var/named/chroot/var/named/
+cp -a /usr/share/doc/bind/sample/var/named/* ./
+mkdir dynamic
+chown -R named.named *
+rm my.* 
+rm slaves/my.*
+vim dalmolin.swilabus.com.internal
+
+$TTL 86400
+@       IN      SOA     dalmolin.swilabus.com.          root.dalmolin.swilabus. (
+                                        2022011801      ; Serial
+                                        28800           ; Refresh
+                                        14400           ; Retry
+                                        3600000         ; Expire
+                                        3600 )          ; Name Error
+
+; *** NAME SERVER
+                IN      NS      ns.dalmolin.swilabus.com.
+
+; *** Record
+ns      IN      A       192.168.190.115
+gate    IN      A       192.168.190.2
+pfsense IN      CNAME   gate
+
+chown named.named *
+
+systemctl start named-chroot
+systemctl enable named-chroot
+
+Checker si il trouve les entrées:
+host ns.dalmolin.swilabus.com 127.0.0.1
+host www.google.com 127.0.0.1
+
+-c
+
+nmtui -> changer le dns dans ens160 -> reactiver la carte
+
+-e
+
+/etc/dhcp/dhcpd.conf -> modifier option domain-name(-servers)
+
+-g
+
+forwarders { 156.154.70.3; 156.154.71.3; };
+
+Ex. 3 - Ajouter une zone DNS inverse pour les IPs 192.168.190.x
+
+; *** NAME SERVER
+                IN      NS      ns.dalmolin.swilabus.com.
+
+; *** Record
+1       IN      PTR     windows.dalmolin.swilabus.com
+2       IN      PTR     pfsense.dalmolin.swilabus.com
+115     IN      PTR     linux.dalmolin.swilabus.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
