@@ -1,0 +1,71 @@
+Ex. 1 - Placer une page web de votre création sur le site web par défaut
+
+vim /etc/httpd/conf.d/default-site.conf
+
+<VirtualHost _default_:80>
+        DocumentRoot /var/www/html
+        <Directory "/var/www/html">
+           Options FollowSymLinks
+           AllowOverride None
+           Require all granted
+        </Directory>
+
+        RewriteEngine On
+        RewriteCond   %{HTTPS}  !=on
+        RewrtieRule   ^/?(.*)   https://%{SERVER_NAME}/$1 [R,L]
+
+        ErrorLog logs/error_log
+        CustomLog logs/access_log combined
+</VirtualHost>
+
+
+Ex. 2 - Autoriser les utilisateurs à déployer leurs sites web personnels. Les fichiers seront placés dans un dossier web présent dans leur répertoire personnel
+
+
+
+Ex. 3 - Créer un dossier admin dans le site web par défaut. Ajoutez-y une page web particulière [...]
+
+NE PAS OUBLIER DE SPECIFIER LA DIRECTORY AVEC LE PATH A PROTEGER
+
+
+Ex. 4 - Créer un script Python permettant d’ajouter les utilisateurs dans le fichier htpasswd protégeant votre site web admin
+
+cf. script
+
+
+Ex. 5 - Configurer un site SSL intranet.swilabus.be en récupérant le certificat [...]
+
+Ajouter une nouvelle entrée de site
+Spécifier le IP:port
+
+<VirtualHost 192.168.190.115:443 192.168.131.2:443>
+        DocumentRoot "/var/www/intranet"
+        ServerName intranet.swilabus.be:443
+        ErrorLog logs/secured_ssl_error_log
+        TransferLog logs/secured_ssl_access_log
+        LogLevel warn
+        SSLEngine on
+        SSLProtocol all -SSLV2 -SSLv3 -TLSv1 -TLSv1.1 -TLSv1.2
+        SSLHonorCipherOrder off
+        SSLSessionTickets off
+        #SSLCipherSuite PROFILE=SYSTEM
+        #SSLProxycipherSuite PROFILE=SYSTEM
+        SSLCertificateFile /etc/pki/tls/certs/intranet.swilabus.be.crt
+        SSLCertificateKeyFile /etc/pki/tls/private/intranet.swilabus.be.key
+        SSLCertificateChainFile /etc/pki/tls/certs/CA_Intermediate.crt
+        <FilesMatch "\.(cgi|shtml|phtml|php)$">
+                SSLOptions +StdEnvVars
+        </FilesMatch>
+        <Directory "/var/www/cgi-bin">
+                SSLOptions +StdEnvVars
+        </Directory>
+
+        BrowserMatch "MSIE [2-5]" \
+                nokeepalive ssl-unclean-shutdown \
+                downgrade-1.0 force-response-1.0
+
+        CustomLog logs/ssl_request_log \
+                "%t %h %{SSL_PROTOCOL}x {SSL_CIPHER}x \"%r\" %b"
+</VirtualHost>
+
+
