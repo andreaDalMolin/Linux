@@ -1,0 +1,29 @@
+#!/usr/sbin/nft -f
+
+### GENERAL DEFINITION
+define LAN4_INTERNAL = { 192.168.131.0/24 }
+define LAN6_INTERNAL = { fe80::/10 }
+define PUBLIC_TCP_PORT = { 4022, 4000, 63000-63500 }
+
+# Flush all rules
+flush ruleset
+
+table inet SwilaWall {
+        chain incoming {
+                type filter hook input priority 0; policy drop;
+                meta iif lo accept comment "Accept localhost traffic"
+                ct state new tcp dport $PUBLIC_TCP_PORT accept comment "Accept TCP Open ports"
+                ct state invalid drop comment "Invalid connection"
+                ct state established, related accept comment "Accept response"
+                log
+        }
+
+        chain forwarding {
+                type filter hook forward priority 0; policy drop;
+        }
+
+        chain outgoing {
+                type filter hook output priority 0; policy accept;
+                meta oif lo accept comment "Accept localhost traffic"
+        }
+}

@@ -1,0 +1,97 @@
+1.
+	a.
+	define UNTRUST_IF = ens160
+	define TRUST_NET = 192.168.131.0/24
+	table ip SwilaWallNAT {
+		chain nat_out {
+			type nat hook postrouting priority 100;
+			meta oif $UNTRUST_IF ip saddr $TRUST_NET masquerade
+		}
+	}
+
+	b.
+	define FIREWALL_TCP = { 22, 53 }							# À ajouter
+	define FIREWALL_UDP = { 53 }								# À ajouter
+	table inet SwilaWall {
+		# Internet > Firewall
+		chain untrust_to_firewall {
+			ct state new tcp dport $FIREWALL_TCP accept			# À ajouter !!
+			udp dport $FIREWALL_UDP accept						# À ajouter !!
+			ip saddr 192.190.190.0/24 ip protocol icmp accept	# À ajouter !!
+			ct state invalid drop
+			ct state established,related accept
+			log
+			drop
+		}
+	}
+
+	c.
+	define TRUST_NET_TCP = { 80, 443 }							# À ajouter
+	define TRUST_NET_UDP = { 53 }								# À ajouter
+	table inet SwilaWall {
+		# Client > Internet
+		chain trust_to_untrust {
+			ct state new tcp dport $TRUST_NET_TCP accept		# À ajouter !!
+			udp dport $TRUST_NET_UDP accept						# À ajouter !!
+			ct state invalid drop								# À ajouter
+			ct state established,related accept					# À ajouter
+			log													# À ajouter
+			drop												# À ajouter
+		}
+	}
+
+	d.
+	define SERVER1_TCP = { 4022 }
+	table inet SwilaWall {
+		# Internet > Client
+		chain untrust_to_trust {
+			ct state new ip daddr $SERVER1_IP tcp dport $SERVER1_TCP accept	# À ajouter !!
+			ct state invalid drop											# À ajouter
+			ct state established,related accept								# À ajouter
+			log																# À ajouter
+			drop															# À ajouter
+		}
+	}
+	table ip SwilaWallNAT {
+		chain nat_in {
+			type nat hook prerouting priority -100;
+			meta iif $UNTRUST_IF ip daddr $UNTRUST_IP tcp dport $SERVER1_TCP dnat to $SERVER1_IP	# À ajouter !!
+		}
+	}
+
+	Modifier /etc/ssh/sshd_config:
+		Port 4022
+
+2.
+Modifier /etc/vsftpd/vsftpd.conf:
+	À ajouter:
+		listen_port=4000
+		pasv_min_port=63000
+		pasv_max_port=63500
+		pasv_address=192.168.131.15
+systemctl start vsftpd
+
+3.
+define LAN4_INTERNAL = { 192.168.131.0/24 }
+define LAN6_INTERNAL = { fe80::/10 }
+define PUBLIC_TCP_PORT = { 4022, 4000, 63000-63500 }
+table inet SwilaWall {
+	chain incoming {
+		type filter hook input priority 0; policy drop;
+		meta iif lo accept comment "Accept localhost traffic"
+		ct state new tcp dport $PUBLIC_TCP_PORT accept comment "Accept TCP Open ports"	# À ajouter
+		ct state invalid drop comment "Invalid connection"
+		ct state established, related accept comment "Accept response"
+		log
+	}
+}
+
+Check listen port:
+	lsof -i -P -n | grep LISTEN
+
+Check FTP (depuis machine routeur):
+	ftp
+	open 192.168.131.15 4000
+
+Check SSH (depuis la machine Windows):
+	ssh root@192.168.190.115 -p 4022

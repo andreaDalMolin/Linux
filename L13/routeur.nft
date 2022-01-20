@@ -1,0 +1,103 @@
+#!/usr/sbin/nft -f
+
+### GENERAL DECLARATION
+define UNTRUST_IP = 192.168.190.115
+define UNTRUST_IF = ens160
+define TRUST_NET = 192.168.131.0/24
+define TRUST_IF = ens224
+define TRUST_NET_TCP = { 80, 443 }
+define TRUST_NET_UDP = { 53 }
+define SERVER1_IP = 192.168.131.15
+define SERVER1_TCP = { 4022 }
+define FIREWALL_TCP = { 22, 53 }
+define FIREWALL_UDP = { 53 }
+
+flush ruleset
+
+table inet SwilaWall {
+
+        # Firewall > Internet
+        chain firewall_to_untrust {
+                accept
+        }
+
+        # Internet > Firewall
+        chain untrust_to_firewall {
+                ct state new tcp dport $FIREWALL_TCP accept
+                udp dport $FIREWALL_UDP accept
+                ip saddr 192.190.190.0/24 ip protocol icmp accept
+                ct state invalid drop
+                ct state established,related accept
+                log
+                drop
+        }
+
+        # Client > Firewall
+        chain trust_to_firewall {
+                accept
+        }
+
+        # Firewall > Client
+        chain firewall_to_trust {
+                accept
+        }
+
+        # Client > Internet
+        chain trust_to_untrust {
+                ct state new tcp dport $TRUST_NET_TCP accept
+                udp dport $TRUST_NET_UDP accept
+                ct state invalid drop
+                ct state established,related accept
+                log
+                drop
+        }
+
+        # Internet > Client
+        chain untrust_to_trust {
+                ct state new ip daddr $SERVER1_IP tcp dport $SERVER1_TCP accept
+                #ip daddr $SERVER1_IP udp dport $SERVER1_UDP accept
+                ct state invalid drop
+                ct state established,related accept
+                log
+                drop
+        }
+
+
+        chain incoming {
+                type filter hook input priority 0; policy drop;
+                meta iif lo accept
+                meta iif $UNTRUST_IF jump untrust_to_firewall
+                meta iif $TRUST_IF jump trust_to_firewall
+                log
+        }
+
+        chain forwarding {
+                type filter hook forward priority 0; policy drop;
+                meta iif $UNTRUST_IF meta oif $TRUST_IF jump untrust_to_trust
+                meta iif $TRUST_IF meta oif $UNTRUST_IF jump trust_to_untrust
+                log
+        }
+
+        chain outgoing {
+                type filter hook output priority 0; policy drop;
+                meta oif lo accept
+                meta oif $UNTRUST_IF jump firewall_to_untrust
+                meta oif $TRUST_IF jump firewall_to_trust
+                log
+        }
+
+}
+
+table ip SwilaWallNAT {
+        chain nat_in {
+                type nat hook prerouting priority -100;
+                meta iif $UNTRUST_IF ip daddr $UNTRUST_IP tcp dport $SERVER1_TCP dnat to $SERVER1_IP
+                #meta iif $UNTRUST_IF ip daddr $UNTRUST_IP udp dport $SERVER1_UDP dnat to $SERVER1_IP
+        }
+
+        chain nat_out {
+                type nat hook postrouting priority 100;
+                meta oif $UNTRUST_IF ip saddr $TRUST_NET masquerade
+        }
+
+}
